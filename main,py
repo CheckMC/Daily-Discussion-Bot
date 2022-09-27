@@ -5,8 +5,23 @@ from tokenize import String
 import interactions
 from discord import app_commands
 import numpy
+import datetime
 
-# ARRAY SETUP -----------------------------------------------------------------------
+# Date/Time  -----------------------------------------------------------------------
+
+#important! add all dates or fix < and >
+
+def suffix_function(n):
+    if n == 1: return "st"
+    if n == 2: return "nd"
+    if n == 3: return "rd"
+    if n <= 4 >= 20: return "th"
+    if n == 21: return "st"
+    if n == 22: return "nd"
+    if n == 23: return "rd"
+    if n == 26: return "th"
+    if n == 31: return "st"
+   
 
 
 # BOT SETUP -------------------------------------------------------------------------
@@ -43,10 +58,17 @@ async def add_prompt(ctx: interactions.CommandContext, prompt: string):
     scope=744023087950987325,
 )
 async def test_forum_sending(ctx: interactions.CommandContext):
+    now = datetime.datetime.now()
+    datenum = now.strftime('%d')
+    dateint = int(datenum)
+    print(dateint)
+    dateString = now.strftime('%B %d'+suffix_function(dateint))
     await ctx.send("Forum post created!")
     forumChannel = await interactions.get(bot, interactions.Channel, object_id="1006432594881167470")
-    await forumChannel.create_forum_post("Test Forum","Test Forum Post Content", applied_tags=[1006433604013932625])
+    await forumChannel.create_forum_post(dateString,"Hmm, question?", applied_tags=[1006433604013932625])
 
-
+async def promptify():
+    text_file = open('C:/Users/check/Documents/GitHub/Daily-Discussion-Bot/prompt_bank.txt', "r")
+    
 
 bot.start()
