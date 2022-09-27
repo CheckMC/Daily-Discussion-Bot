@@ -1,0 +1,52 @@
+from code import interact
+from doctest import debug_script
+import string
+from tokenize import String
+import interactions
+from discord import app_commands
+import numpy
+
+# ARRAY SETUP -----------------------------------------------------------------------
+
+
+# BOT SETUP -------------------------------------------------------------------------
+
+bot = interactions.Client(token="MTAyMTUyMzEwNzAzNjUzNjg2Mg.GEWaSl.5tFbNbXZ0EVAuznxoK0KMAgolfMfUVoRZsJ3UU")
+
+print('Daily Discussion Bot started!')
+
+# COMMAND SETUP ---------------------------------------------------------------------
+
+@bot.command(
+    name="add_prompt",
+    description="Adds a prompt to the backup prompt bank.",
+    scope=744023087950987325,
+    options = [
+        interactions.Option(
+            name="prompt",
+            description="Your prompt. Do not include date, only the question.",
+            type=interactions.OptionType.STRING,
+            required=True,
+        ),
+    ],
+)
+async def add_prompt(ctx: interactions.CommandContext, prompt: string):
+    text_file = open('C:/Users/check/Documents/GitHub/Daily-Discussion-Bot/prompt_bank.txt', "a")
+    print("Adding prompt - "+prompt)
+    text_file.write(prompt+"\n")
+    text_file.close
+    await ctx.send()
+
+@bot.command(
+    name="test_forum_sending",
+    description="Test Command - Creates a thread with a discussion question.",
+    scope=744023087950987325,
+)
+async def test_forum_sending(ctx: interactions.CommandContext):
+    await ctx.send("Forum post created!")
+    forumChannel = await interactions.get(bot, interactions.Channel, object_id="1006432594881167470")
+    await forumChannel.create_forum_post("Test Forum","Test Forum Post Content", applied_tags=[1006433604013932625])
+
+
+
+bot.start()
