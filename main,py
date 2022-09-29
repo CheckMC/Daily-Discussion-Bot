@@ -1,12 +1,26 @@
+from ast import Import
 from code import interact
 from doctest import debug_script
+from sched import scheduler
 import string
 from tokenize import String
 import interactions
 from discord import app_commands
 import numpy
 import datetime
-from interactions.ext.tasks import IntervalTrigger, create_task
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+import os
+
+import asyncio
+
+from configparser import ConfigParser
+
+from pytest import Config
+
+config = ConfigParser()
+config.read("config.ini")
+
+
 
 # Date/Time  -----------------------------------------------------------------------
 
@@ -51,6 +65,33 @@ async def add_prompt(ctx: interactions.CommandContext, prompt: string):
     await ctx.send("Added prompt: "+prompt)
     text_file.write(prompt+"\n")
     text_file.close
+
+@bot.command(
+    name="remove_prompt",
+    description="Removes a prompt from the prompt bank.",
+    scope=744023087950987325,
+    options = [
+        interactions.Option(
+            name="prompt",
+            description="Using /list_prompts, copy and paste the exact prompt you want to remove. Must be exact.",
+            type=interactions.OptionType.STRING,
+            required=True,
+        ),
+    ],
+    default_member_permissions=interactions.Permissions.MUTE_MEMBERS,  # staff only :)
+)
+async def remove_prompt(ctx: interactions.CommandContext,prompt: string):
+    print(prompt)
+    text_file = open('C:/Users/check/Documents/GitHub/Daily-Discussion-Bot/prompt_bank.txt', "r")
+    print("Removing prompt - "+prompt)
+    promptArray = text_file.read().split('\n')
+    promptArray.remove(prompt)
+    promptsString = '\n'.join(promptArray)
+    print(promptsString)
+    text_file_write = open('C:/Users/check/Documents/GitHub/Daily-Discussion-Bot/prompt_bank.txt', "w")
+    text_file_write.write(promptsString)
+    text_file_write.close
+    await ctx.send("Removed Prompt: "+prompt)
 
 @bot.command(
     name="list_prompts",
@@ -118,10 +159,9 @@ async def postForumTopic():
     promptsFileWrite.write(promptsString)
     promptsFileWrite.close()
 
-@create_task(IntervalTrigger(86400))
-async def dailyTask():
-    await postForumTopic()
-
-dailyTask.start()
+if __name__ == '__main__':
+    scheduler = AsyncIOScheduler()
+    scheduler.add_job(postForumTopic, 'cron', hour='22',minute='25')
+    scheduler.start()
 
 bot.start()
