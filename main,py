@@ -8,10 +8,7 @@ import interactions
 from discord import app_commands
 import numpy
 import datetime
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
 import os
-
-import asyncio
 
 from configparser import ConfigParser
 
