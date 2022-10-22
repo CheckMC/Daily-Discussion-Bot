@@ -9,19 +9,19 @@ from discord import app_commands
 import numpy
 import datetime
 import os
-
+from dotenv import load_dotenv
 from configparser import ConfigParser
 
 from pytest import Config
 
+# CONFIG SETUP ----------------------------------------------------------------------
+
 config = ConfigParser()
 config.read("config.ini")
 
-
+promptBankFile = 'prompt_bank.txt'
 
 # Date/Time  -----------------------------------------------------------------------
-
-#important! add all dates or fix < and >
 
 def suffix_function(n):
     if n == 1: return "st"
@@ -35,12 +35,13 @@ def suffix_function(n):
     if n == 31: return "st"
    
 # BOT SETUP -------------------------------------------------------------------------
-
-bot = interactions.Client(token="MTAyMTUyMzEwNzAzNjUzNjg2Mg.GEWaSl.5tFbNbXZ0EVAuznxoK0KMAgolfMfUVoRZsJ3UU")
+load_dotenv()
+logintoken = os.getenv('LOGIN')
+bot = interactions.Client(token=logintoken)
 
 print('Daily Discussion Bot started!')
 
-# COMMAND SETUP ---------------------------------------------------------------------
+# COMMANDS  ---------------------------------------------------------------------
 
 @bot.command(
     name="add_prompt",
@@ -57,7 +58,7 @@ print('Daily Discussion Bot started!')
     default_member_permissions=interactions.Permissions.MUTE_MEMBERS,  # staff only :)
 )
 async def add_prompt(ctx: interactions.CommandContext, prompt: string):
-    text_file = open('C:/Users/check/Documents/GitHub/Daily-Discussion-Bot/prompt_bank.txt', "a")
+    text_file = open(promptBankFile, "a")
     print("Adding prompt - "+prompt)
     await ctx.send("Added prompt: "+prompt)
     text_file.write(prompt+"\n")
@@ -79,13 +80,13 @@ async def add_prompt(ctx: interactions.CommandContext, prompt: string):
 )
 async def remove_prompt(ctx: interactions.CommandContext,prompt: string):
     print(prompt)
-    text_file = open('C:/Users/check/Documents/GitHub/Daily-Discussion-Bot/prompt_bank.txt', "r")
+    text_file = open(promptBankFile, "r")
     print("Removing prompt - "+prompt)
     promptArray = text_file.read().split('\n')
     promptArray.remove(prompt)
     promptsString = '\n'.join(promptArray)
     print(promptsString)
-    text_file_write = open('C:/Users/check/Documents/GitHub/Daily-Discussion-Bot/prompt_bank.txt', "w")
+    text_file_write = open(promptBankFile, "w")
     text_file_write.write(promptsString)
     text_file_write.close
     await ctx.send("Removed Prompt: "+prompt)
@@ -97,7 +98,7 @@ async def remove_prompt(ctx: interactions.CommandContext,prompt: string):
     default_member_permissions=interactions.Permissions.MUTE_MEMBERS,  # staff only :)
 )
 async def list_prompts(ctx: interactions.CommandContext):
-    promptsFileRead = open('C:/Users/check/Documents/GitHub/Daily-Discussion-Bot/prompt_bank.txt', "r")
+    promptsFileRead = open(promptBankFile, "r")
     promptArray = promptsFileRead.read().split('\n')
     promptsString = '\n'.join(promptArray)
     await ctx.send(promptsString)
@@ -111,9 +112,13 @@ async def list_prompts(ctx: interactions.CommandContext):
 )
 async def test_forum_sending(ctx: interactions.CommandContext):
     await postForumTopic()
-    ctx.send("test successful :)")
+    await ctx.send("test successful :)")
 
 async def postForumTopic():
+
+    day = config.get('BOT',"DAY")
+    print("day: "+day)
+
     print("SCHEDULE ACTIVATED!")
     now = datetime.datetime.now()
     datenum = now.strftime('%d')
@@ -122,15 +127,12 @@ async def postForumTopic():
     dateSuffix = suffix_function(dateint)
     dateString = now.strftime('%B %d'+dateSuffix)
 
-    dayConfigFileRead = open('C:/Users/check/Documents/GitHub/Daily-Discussion-Bot/daynum.txt', "r")
-    rawDayNum = int(dayConfigFileRead.read())
-    dayNum = str(rawDayNum + 1)
-
-    promptsFileRead = open('C:/Users/check/Documents/GitHub/Daily-Discussion-Bot/prompt_bank.txt', "r")
+    promptsFileRead = open(promptBankFile, "r")
     promptArray = promptsFileRead.read().split('\n')
     todaysQuestion = promptArray[0]
 
-    forumChannel = await interactions.get(bot, interactions.Channel, object_id="1006432594881167470")
+    forumChannel = await interactions.get(bot, interactions.Channel, object_id='1006432594881167470')
+    #error is here
     sentMessage = await forumChannel.create_forum_post(dateString,todaysQuestion, applied_tags=[1006433604013932625])
     msgID = sentMessage.id
 
@@ -138,15 +140,16 @@ async def postForumTopic():
 
     announcementLink = "https://www.discord.com/channels/744023087950987325/"+str(msgID)
     announcementChannel = await interactions.get(bot, interactions.Channel, object_id="766077932686278686")
-    await announcementChannel.send("**"+dateString+", "+"Day "+dayNum+", Today's Topic Is: **_"+todaysQuestion+"_"+"\n \nFind the discussion post here:\n"+announcementLink)
+    await announcementChannel.send("**"+dateString+", "+"Day "+day+", Today's Topic Is: **_"+todaysQuestion+"_"+"\n \nFind the discussion post here:\n"+announcementLink)
 
-    dayConfigFileWrite = open('C:/Users/check/Documents/GitHub/Daily-Discussion-Bot/daynum.txt', "w")
-    dayConfigFileWrite.write(dayNum)
-    dayConfigFileWrite.close()
-
-    promptsFileWrite = open('C:/Users/check/Documents/GitHub/Daily-Discussion-Bot/prompt_bank.txt', "w")
+    promptsFileWrite = open(promptBankFile, "w")
     promptArray.pop(0)
     print(promptArray)
+
+    config.set('BOT','DAY', str(int(day)+1))
+
+    with open('config.ini','w') as configfile:
+        config.write(configfile)
 
     if len(promptArray) == 1:
         await staffChannel.send("**NO MORE PROMPTS! If no new prompts are added with /add_prompt, I will not be able to post the daily discussion tomorrow!**")
