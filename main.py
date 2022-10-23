@@ -14,6 +14,7 @@ import os
 from dotenv import load_dotenv
 from configparser import ConfigParser
 
+import pytz
 from datetime import time
 
 from pytest import Config
@@ -41,8 +42,12 @@ lastPost = datetime.date(datetime.strptime(config.get('BOT','LASTPOSTDATE'),'%m/
 print(lastPost)
 today = datetime.date(datetime.today())
 
-currentTime = datetime.today()
+easternTime = pytz.timezone("US/EASTERN")
+
+currentTime = datetime.now(easternTime)
 desiredPostTime = datetime(today.year, today.month, today.day, int(config.get('BOT','POSTHOUR')),int(config.get('BOT','POSTMINUTE')),0,0)
+
+desiredPostTime = desiredPostTime.astimezone(easternTime)
 
 print("desired: "+str(desiredPostTime))
 print("current: "+str(currentTime))
@@ -259,6 +264,9 @@ async def test_forum_sending(ctx: interactions.CommandContext):
 async def toggle_bot(ctx: interactions.CommandContext):
     botRunning = config.get('BOT',"BOTENABLED")
 
+    forumChannel = await interactions.get(bot, interactions.Channel, object_id='1006641743497805925')
+    print(forumChannel.available_tags)
+
     if (botRunning == "False"):
         config.set('BOT','BOTENABLED', "True")
 
@@ -279,6 +287,8 @@ async def toggle_bot(ctx: interactions.CommandContext):
 
 # POST DISCUSSION FUNCTION -------------------------------------------------------------------------------------
 async def postForumTopic():
+
+    debaterRole = await interactions.get(bot, interactions.Role,object_id='927677606571147284',parent_id="996556166794575895")
     staffChannel = await interactions.get(bot, interactions.Channel, object_id="777996362477993984")
 
     botRunning = bool(config.get('BOT',"BOTENABLED"))
@@ -305,14 +315,14 @@ async def postForumTopic():
     dateSuffix = suffix_function(dateint)
     dateString = now.strftime('%B %d'+dateSuffix)
 
-    forumChannel = await interactions.get(bot, interactions.Channel, object_id='1006432594881167470')
-    sentMessage = await forumChannel.create_forum_post(dateString,todaysQuestion, applied_tags=[1006433604013932625])
-    announcementChannel = await interactions.get(bot, interactions.Channel, object_id="766077932686278686")
+    forumChannel = await interactions.get(bot, interactions.Channel, object_id='1006641743497805925')
+    sentMessage = await forumChannel.create_forum_post(dateString,todaysQuestion, applied_tags=[1006646618772209724])
+    announcementChannel = await interactions.get(bot, interactions.Channel, object_id="960717362544386058")
 
     msgID = sentMessage.id
 
-    announcementLink = "https://www.discord.com/channels/744023087950987325/"+str(msgID)
-    await announcementChannel.send("**"+dateString+", "+"Day "+day+", Today's Topic Is: **_"+todaysQuestion+"_"+"\n \nFind the discussion post here:\n"+announcementLink)
+    announcementLink = "https://discord.com/channels/744023087950987325/"+str(msgID)
+    await announcementChannel.send("**"+dateString+", "+"Day "+day+", Today's Topic Is: **_"+todaysQuestion+"_"+"\n \nFind the discussion post here:\n"+announcementLink+debaterRole.mention)
 
     promptsFileWrite = open(promptBankFile, "w")
     promptArray.pop(0)
