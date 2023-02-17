@@ -1,3 +1,3 @@
 This is Superfly's automated Daily Discussion bot.
 
-Built by Check Studios.
+**REFACTORING IN PROGRESS, CURRENTLY HARD-CODED FOR SUPERFLY'S SERVER**
